@@ -727,7 +727,7 @@ class FileNameAttribute(Attribute["MetaPropertyCache", Path]):
                         break
 
                 if ui_index is not None and ui_index + 1 < len(parts):
-                    for subfolder in ["4k", "4kimages", "2kimages"]:
+                    for subfolder in ["4k", "4kimages", "2kimages", "fhd"]:
                         alt_parts = parts[:]
                         alt_parts[ui_index + 1] = subfolder
                         alt_path = Path(*alt_parts)

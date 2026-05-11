@@ -50,7 +50,14 @@ class RDAExtractor:
             print(f"Error: Main data directory not found at {self.main_data_path}")
             return {}
 
-        rda_files: dict[str, List[Path]] = {"config": [], "ui": [], "graphics": []}
+        rda_files: dict[str, List[Path]] = {
+            "config": [],
+            "ui": [],
+            "graphics": [],
+            "patches": [],
+            "dlc": [],
+            "provinces": [],
+        }
 
         for rda_file in self.main_data_path.glob("*.rda"):
             name = rda_file.stem.lower()
@@ -60,6 +67,12 @@ class RDAExtractor:
                 rda_files["ui"].append(rda_file)
             elif name.startswith("graphics") or name == "shared_configs":
                 rda_files["graphics"].append(rda_file)
+            elif "dlc" in name:
+                rda_files["dlc"].append(rda_file)
+            elif name.startswith("zz_patchfiles"):
+                rda_files["patches"].append(rda_file)
+            elif name.startswith("provinces"):
+                rda_files["provinces"].append(rda_file)
 
         return rda_files
 
@@ -159,6 +172,21 @@ class RDAExtractor:
         # Extract .ifo files from graphics RDA files
         for graphics_rda in rda_files["graphics"]:
             if not self.extract_graphics_ifo(graphics_rda):
+                success = False
+
+        # Extract icon files from patches RDA files
+        for patch_rda in rda_files["patches"]:
+            if not self.extract_ui_icons(patch_rda):
+                success = False
+
+        # Extract icon files from dlc RDA files
+        for dlc_rda in rda_files["dlc"]:
+            if not self.extract_ui_icons(dlc_rda):
+                success = False
+
+        # Extract icon files from provinces RDA files
+        for province_rda in rda_files["provinces"]:
+            if not self.extract_ui_icons(province_rda):
                 success = False
 
         if success:
