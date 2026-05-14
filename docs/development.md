@@ -76,6 +76,10 @@ Requirements: 7-Zip in PATH; Google Sheets credentials are optional.
 - Version report is auto-generated when 2+ versions exist in the DB.
 - `--prev-version` overrides the default (latest − 1) comparison base.
 
+## Typed Asset Subclasses
+
+Game-domain `Asset` subclasses live in `assetextractor/parsing/typed/`. Each subclass declares its XML template name(s) once (via `template_names=`) and is auto-registered; no other file needs updating. See `assetextractor/parsing/typed/README.md` for the full guide — including multi-template mapping, abstract base conventions, and `BaseAssetGUID` upgrade caveats.
+
 ## VS Code
 
 `.vscode/launch.json` ships with:
