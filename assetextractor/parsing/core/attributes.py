@@ -169,7 +169,7 @@ class Property(NamedElement[t.Any]):
 
     def find_ref(self, path: str) -> Asset | None:
         """Follow path and return the referenced Asset, or None if missing or unresolved."""
-        return t.cast(Asset | None, self.find_value(path))
+        return t.cast("Asset | None", self.find_value(path))
 
     def get_tree_note(self, inherited: bool) -> str:
         if inherited:
@@ -254,7 +254,7 @@ class Attribute[CacheT: ElementCache[t.Any, t.Any], ValueT](NamedElement[CacheT]
 
     def find_ref(self, path: str) -> Asset | None:
         """Follow path and return the referenced Asset, or None if missing or unresolved."""
-        return t.cast(Asset | None, self.find_value(path))
+        return t.cast("Asset | None", self.find_value(path))
 
     def get_tree_note(self, inherited: bool = False) -> str:
         """Returns a note for the tree representation."""
@@ -1085,7 +1085,7 @@ class ListItem(NamedElement[t.Any]):
 
     def find_ref(self, path: str) -> Asset | None:
         """Follow path and return the referenced Asset, or None if missing or unresolved."""
-        return t.cast(Asset | None, self.find_value(path))
+        return t.cast("Asset | None", self.find_value(path))
 
     @property
     def ui_text(self) -> str | None:
