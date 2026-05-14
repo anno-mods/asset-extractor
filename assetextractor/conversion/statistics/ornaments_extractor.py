@@ -1,10 +1,10 @@
 import json
 from pathlib import Path
-from typing import Dict, List, Type, TypedDict, TypeVar
+from typing import Dict, List, TypedDict
 
 from assetextractor.conversion.statistics.icon_processor import IconProcessor
-from assetextractor.parsing.core.asset_factories.construction_category import ConstructionCategory
-from assetextractor.parsing.core.asset_factories.ornamental_building import OrnamentalBuilding
+from assetextractor.parsing.typed.construction_category import ConstructionCategory
+from assetextractor.parsing.typed.ornamental_building import OrnamentalBuilding
 from assetextractor.parsing.core.assets import Asset, AssetCache
 from assetextractor.parsing.core.texts import StandardTextConverter
 
@@ -37,9 +37,6 @@ class OrnamentItemJSON(TypedDict):
     """The root construction group of the construction group."""
 
 
-AssetT = TypeVar("AssetT", bound="Asset")
-
-
 class OrnamentsExtractor:
     """Main orchestrator for extracting ornaments from Anno 117 assets."""
 
@@ -62,25 +59,13 @@ class OrnamentsExtractor:
         """Ensures the shared cache is using this extractor's language."""
         self.assets.texts.converter = StandardTextConverter(self.language)
 
-    def get_typed_assets(self, template_name: str, cls: Type[AssetT]) -> List[AssetT]:
-        """Helper to get assets and treat them as a specific subclass."""
-        template = self.assets.templates.get(template_name)
-
-        if template is None:
-            return []
-
-        base_assets = template.assets
-
-        # Re-wrap or cast them to the specialized class
-        return [cls(a.node, self.assets) for a in base_assets]
-
     def _map_construction_categories(self):
         """
         Traverses ConstructionCategories recursively to find and group
         all OrnamentalBuildings under their respective parent groups.
         """
-        # 1. Get all specialized top-level categories
-        categories = self.get_typed_assets("ConstructionCategory", ConstructionCategory)
+        template = self.assets.templates.get("ConstructionCategory")
+        categories = [a for a in template.assets if isinstance(a, ConstructionCategory)] if template else []
 
         for category in categories:
             # We will store pairs: (The Asset, The specific group it was found in)
@@ -107,33 +92,16 @@ class OrnamentsExtractor:
         current_group: ConstructionGroupJSON,
     ):
         """Walks the tree, supporting multiple templates and capturing sub-groups."""
-        # Whitelist of templates that behave like ornaments
-        ornament_templates = {"OrnamentalBuilding", "PolygonObject"}
-
         for asset in assets:
-            tpl_name = asset.template.name
-
-            if tpl_name in ornament_templates:
-                # Specialize to OrnamentalBuilding (works for PolygonObject too
-                # since they share the same XML structure for Text/Icons)
-                ornament = OrnamentalBuilding(asset.node, self.assets)
-
-                # Store the ornament paired with its immediate parent group metadata
-                collection.append((ornament, current_group))
-
-            elif tpl_name == "ConstructionCategory":
-                # If we find a sub-category, specialize it to access its building_assets
-                sub_cat = ConstructionCategory(asset.node, self.assets)
-
-                # Create metadata for the sub-level
+            if isinstance(asset, OrnamentalBuilding):
+                collection.append((asset, current_group))
+            elif isinstance(asset, ConstructionCategory):
                 sub_group_info: ConstructionGroupJSON = {
-                    "guid": str(sub_cat.guid),
-                    "name": sub_cat.name,
-                    "localized_name": sub_cat.localized_title,
+                    "guid": str(asset.guid),
+                    "name": asset.name,
+                    "localized_name": asset.localized_title,
                 }
-
-                # Recursive call with the NEW sub-group as the parent
-                self._collect_ornaments_recursive(sub_cat.building_assets, collection, sub_group_info)
+                self._collect_ornaments_recursive(asset.building_assets, collection, sub_group_info)
 
     def extract_all(self):
         """

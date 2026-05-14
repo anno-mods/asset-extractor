@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from assetextractor.parsing.core.asset_factories.common.cost import AssetWithCosts
+from assetextractor.parsing.typed.cost import AssetWithCosts
 
 
-class Production(AssetWithCosts):
+class Production(AssetWithCosts, template_names="Production"):
     """
     Specialized Asset for 'Production' with pre-computed data.
 
@@ -14,7 +14,7 @@ class Production(AssetWithCosts):
     pass
 
 
-class ProductionField(AssetWithCosts):
+class ProductionField(AssetWithCosts, template_names="Production Field"):
     """
     Specialized Asset for 'Production Field' with pre-computed data.
 
@@ -25,7 +25,7 @@ class ProductionField(AssetWithCosts):
     pass
 
 
-class SlotFactoryBuilding7(AssetWithCosts):
+class SlotFactoryBuilding7(AssetWithCosts, template_names="SlotFactoryBuilding7"):
     """
     Specialized Asset for 'SlotFactoryBuilding7' with pre-computed data.
 
@@ -36,7 +36,7 @@ class SlotFactoryBuilding7(AssetWithCosts):
     pass
 
 
-class ProductionArea(AssetWithCosts):
+class ProductionArea(AssetWithCosts, template_names="Production Area"):
     """
     Specialized Asset for 'ProductionArea' with pre-computed data.
 

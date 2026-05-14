@@ -168,11 +168,8 @@ class Property(NamedElement[t.Any]):
                     attr.resolve_inheritance(default_attr)
 
     def find_ref(self, path: str) -> Asset | None:
-        elem = self.find(path)
-        if elem is None or not isinstance(elem, ReferenceAttribute):
-            return None
-
-        return elem()
+        """Follow path and return the referenced Asset, or None if missing or unresolved."""
+        return t.cast(Asset | None, self.find_value(path))
 
     def get_tree_note(self, inherited: bool) -> str:
         if inherited:
@@ -256,11 +253,8 @@ class Attribute[CacheT: ElementCache[t.Any, t.Any], ValueT](NamedElement[CacheT]
         return self.meta.default == self or self.node.sourceline is None
 
     def find_ref(self, path: str) -> Asset | None:
-        elem = self.find(path)
-        if elem is None or not isinstance(elem, ReferenceAttribute):
-            return None
-
-        return elem()
+        """Follow path and return the referenced Asset, or None if missing or unresolved."""
+        return t.cast(Asset | None, self.find_value(path))
 
     def get_tree_note(self, inherited: bool = False) -> str:
         """Returns a note for the tree representation."""
@@ -1090,15 +1084,8 @@ class ListItem(NamedElement[t.Any]):
         return elem if i == len(parts) else None
 
     def find_ref(self, path: str) -> Asset | None:
-        """Follow path and return an asset if valid, is a reference, and exists.
-
-        Returns None otherwise.
-        """
-        elem = self.find(path)
-        if elem is None or not isinstance(elem, ReferenceAttribute):
-            return None
-
-        return elem()
+        """Follow path and return the referenced Asset, or None if missing or unresolved."""
+        return t.cast(Asset | None, self.find_value(path))
 
     @property
     def ui_text(self) -> str | None:

@@ -85,3 +85,55 @@ asset.maintenance_costs        # now uses the reloaded class
 - **Cell 2** (re-run freely): test with `LandUnit(assets[guid].node, assets)`, or patch `__class__` on a handful of instances
 
 To make `Asset.create()` pick up a reloaded class for any newly constructed cache, reload `assetextractor.parsing.typed` (which re-runs auto-discovery and repopulates `Asset._registry`).
+
+## API quick reference
+
+### Reading attribute values
+
+| Goal | API |
+|---|---|
+| Raw value (int, str, bool) | `asset.find_value("Group.Field")` |
+| Referenced asset | `asset.find_ref("Group.Field")` -> `Asset \| None` |
+| Referenced asset from a list item | `entry.find_ref("FieldName")` -> `Asset \| None` |
+| Localized text string | `asset.text()` -- `Text.__call__()` uses the active converter |
+| Name with text fallback | `asset.short_description` -- `text()` -> `name` -> `{guid}` |
+
+### Schema guarantees — no defensive guards needed
+
+- Every attribute in the template **always exists** on the asset; `find()` / `find_value()` never return `None` for a known path.
+- Attributes **always have a value**; no `if value is not None` needed before using it.
+- `find_value` calls `()` on the element and returns the **raw Python value** directly; no `isinstance(attr, PrimitiveAttribute)` etc.
+- `find_ref` returns the **already-resolved `Asset`**; no `cache.get(ref.guid)` needed.
+
+### Iterating a list attribute
+
+```python
+# cast once for static typing; the schema guarantees a ListAttribute
+for entry in cast("ListAttribute", self.find("Group.Items")):
+    asset  = entry.find_ref("Asset")                       # reference field
+    amount = cast(int, entry.find_value("Amount") or 0)    # primitive field
+    text   = cast(Text | None, entry.find_value("Title"))  # text field
+    result = text() if text else "fallback"
+```
+
+### Text localization
+
+```python
+asset.text()   # localized string via the active texts.converter
+
+# Attribute that holds a Text object:
+text_obj = cast(Text | None, self.find_value("Some.TextField"))
+result = text_obj() if text_obj else "fallback"
+
+# Set the converter language once before extraction:
+assets.texts.converter = StandardTextConverter("english")
+```
+
+### Accessing typed assets from a template
+
+```python
+template = assets.templates.get("Patron")
+patrons = [a for a in template.assets if isinstance(a, Patron)] if template else []
+```
+
+All assets in `template.assets` are already the correct subclass (registry guarantee), so the `isinstance` filter is only needed for static type narrowing.

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from assetextractor.parsing.core.asset_factories.common.asset_pool_base import AssetPoolBase
+from assetextractor.parsing.typed.asset_pool_base import AssetPoolBase
 
 
-class AssetPool(AssetPoolBase):
+class AssetPool(AssetPoolBase, template_names="AssetPool"):
     """Specialized Asset for 'AssetPool' with pre-computed data."""
 
     @property

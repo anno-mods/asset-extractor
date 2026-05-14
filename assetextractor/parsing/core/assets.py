@@ -29,6 +29,20 @@ if t.TYPE_CHECKING:
 
 class Asset(NamedElement["AssetCache"]):
     IGNORED_TAGS = ("Template", "BaseAssetGUID")
+    _registry: t.ClassVar[dict[str, type[Asset]]] = {}
+
+    def __init_subclass__(cls, template_names: list[str] | str | None = None, **kwargs: t.Any) -> None:
+        super().__init_subclass__(**kwargs)
+        if template_names is not None:
+            for name in ([template_names] if isinstance(template_names, str) else template_names):
+                Asset._registry[name] = cls
+
+    @classmethod
+    def create(cls, node: et._Element, cache: AssetCache) -> Asset:
+        """Instantiate the registered subclass for this node's Template, or Asset."""
+        template_name = node.findtext("Template")
+        subclass = cls._registry.get(template_name, cls) if template_name else cls
+        return subclass(node, cache)
 
     def __init__(self, node: et._Element, cache: AssetCache):
         super().__init__(node, None, cache, name="")
@@ -180,15 +194,8 @@ class Asset(NamedElement["AssetCache"]):
         return True
 
     def find_ref(self, path: str) -> Asset | None:
-        """Follow path and return an asset if valid, is a reference, and exists.
-
-        Returns None otherwise.
-        """
-        elem = self.find(path)
-        if elem is None or not isinstance(elem, ReferenceAttribute):
-            return None
-
-        return elem()
+        """Follow path and return the referenced Asset, or None if missing or unresolved."""
+        return t.cast(Asset | None, self.find_value(path))
 
     @property
     def icon(self) -> FileNameAttribute | None:
@@ -507,7 +514,7 @@ class AssetGroup(Group["AssetCache"]):
                     self.subgroups[group.name] = group
             elif child.tag == "Assets":
                 for subchild in child.iterchildren():
-                    asset = Asset(subchild, self.cache)
+                    asset = Asset.create(subchild, self.cache)
                     self.cache.add(asset)
                     self.elements[asset.guid] = asset
             else:
@@ -541,7 +548,7 @@ class AssetCache(ElementCache[t.Any]):
         #     self.groups[group.name] = group
 
         for element in self.tree.xpath("//Assets/Asset"):
-            asset = Asset(element, self)
+            asset = Asset.create(element, self)
             self.elements[asset.guid] = asset
 
         # Ensure datasets are loaded before resolving references and DLCs
@@ -584,7 +591,14 @@ class AssetCache(ElementCache[t.Any]):
 
         base_asset = self.elements[asset.base_asset_guid]
         self.resolve_inheritance(base_asset)  # recursively resolve inheritance of base asset first
-        asset.resolve_inheritance(base_asset)
+
+        cls = Asset._registry.get(base_asset.template.name, Asset)
+        if cls is not Asset and type(asset) is Asset:
+            typed = cls(asset.node, asset.cache)
+            self.elements[typed.guid] = typed
+            typed.resolve_inheritance(base_asset)
+        else:
+            asset.resolve_inheritance(base_asset)
 
     def resolve_references(self, asset: Asset | Template):
         def process_property(property: Property):
@@ -735,6 +749,8 @@ class AssetCache(ElementCache[t.Any]):
     @staticmethod
     def load(config: Config) -> AssetCache:
         """Loads the asset cache from the given config."""
+        import assetextractor.parsing.typed  # noqa: F401
+
         """Determine paths for 117 or 1800"""
         unpacked_path = config.cache_path
         if (unpacked_path / "data/base").exists():
