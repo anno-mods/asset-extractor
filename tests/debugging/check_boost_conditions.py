@@ -227,7 +227,7 @@ def main():
         41350: "Health >= 1000",
         41352: "Happiness >= 1000",
         41351: "Prestige >= 10000",
-        41355: "FireSafety >= 1000",
+        41355: "Fire Safety >= 1000",
         41353: "Knowledge >= 10000",
         41354: "Belief >= 10000",
         41360: "Money >= 10000",

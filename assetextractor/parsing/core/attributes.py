@@ -456,6 +456,13 @@ class PrimitiveAttribute(Attribute["MetaPropertyCache", bool | str | float | int
         if self.name == "RadiusEffectRangeUpgrade":
             return None  # handeled in RadiusEffectRangeTarget
 
+        # Handled by ReferenceAttribute.buff_ui for AddedFertility/AddedAreaFertility.
+        # The UIText for these has a {} placeholder we cannot fill here, and the
+        # properties-meta default is 100 (not 0), so skipping prevents both
+        # false-positives and duplicates.
+        if self.name in ("FertilityPercent", "AreaFertilityPercent"):
+            return None
+
         if self.cache.ui_text_cache is None or self.value is None or self.value == 0:
             return None
 
