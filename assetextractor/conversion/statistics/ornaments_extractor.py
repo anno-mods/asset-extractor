@@ -3,10 +3,10 @@ from pathlib import Path
 from typing import Dict, List, TypedDict
 
 from assetextractor.conversion.statistics.icon_processor import IconProcessor
-from assetextractor.parsing.typed.construction_category import ConstructionCategory
-from assetextractor.parsing.typed.ornamental_building import OrnamentalBuilding
 from assetextractor.parsing.core.assets import Asset, AssetCache
 from assetextractor.parsing.core.texts import StandardTextConverter
+from assetextractor.parsing.typed.construction_category import ConstructionCategory
+from assetextractor.parsing.typed.ornamental_building import OrnamentalBuilding
 
 
 class ConstructionGroupJSON(TypedDict):
