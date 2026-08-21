@@ -41,7 +41,7 @@ paying it more than once per session:
    Never call this script once per GUID — pass all GUIDs you need in a single invocation.
 
 If the asset browser looks stale (game updated, new items expected), regenerate
-it via `new_version.bat` (see `docs/development.md` "Release Workflow") — that
+it via the commands used in `new_version.bat` (see `docs/development.md` "Release Workflow") — that
 is the authoritative pipeline for the browser and the versioned items CSV.
 Don't run it just to inspect one condition; only when the underlying game data
 has actually changed.
