@@ -5,6 +5,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, List, Union, cast
 
 from assetextractor.parsing.core.assets import Asset
+from assetextractor.parsing.core.texts import strip_html_tags
 from assetextractor.parsing.typed.common.enums import BuildingType, Region
 from assetextractor.parsing.typed.construction_category import ConstructionCategory
 from assetextractor.parsing.typed.ownership import UplayProduct
@@ -44,7 +45,12 @@ class AssetWithBuilding(Asset):
         default.
         """
         hint_asset = self.building_info.origin_hint
-        return hint_asset.text() if hint_asset and hint_asset.text else "Base"
+
+        if hint_asset and hint_asset.text:
+            raw_text = hint_asset.text()
+            return strip_html_tags(raw_text)
+
+        return "Base"
 
     @cached_property
     def building_info(self) -> Building:

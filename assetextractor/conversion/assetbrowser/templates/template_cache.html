@@ -12,7 +12,7 @@
     <ul>
         {% macro render_node(node) %}
 
-        <li>{{ node.name if node.name else node }}</li>
+        <li>{{ node.name | striptags if node.name else node | striptags }}</li>
         <ul>
             {% for name,template in node.elements.items() %}
             {% set is_empty = (template.instances|length == 0) %}

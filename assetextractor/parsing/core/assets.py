@@ -18,7 +18,7 @@ from assetextractor.parsing.core.attributes import (
 from assetextractor.parsing.core.common import ElementCache, Group, NamedElement, WeightedReference
 from assetextractor.parsing.core.properties import Attribute, DatasetCache, MetaPropertyCache
 from assetextractor.parsing.core.templates import NamedRefColT, Template, TemplateCache, TemplateGroup
-from assetextractor.parsing.core.texts import Text, TextCache
+from assetextractor.parsing.core.texts import Text, TextCache, strip_html_tags
 from assetextractor.parsing.core.uitext import BuffUI, UITextCache
 
 if t.TYPE_CHECKING:
@@ -173,7 +173,7 @@ class Asset(NamedElement["AssetCache"]):
     @property
     def short_description(self) -> str:
         if self.text is not None:
-            text = self.text()  # use text converter
+            text = strip_html_tags(self.text())  # use text converter
             if len(text) <= 120:
                 return text
             else:

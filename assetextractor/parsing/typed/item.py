@@ -18,6 +18,7 @@ from assetextractor.parsing.typed.common.enums import (
 if TYPE_CHECKING:
     from assetextractor.parsing.core.attributes import WandImageProto
     from assetextractor.parsing.core.texts import Text
+    from assetextractor.parsing.typed.effect import Effect
 
 
 @dataclass(frozen=True)
@@ -69,6 +70,16 @@ class ItemInfo:
     """Specific item origin type from dataset 'ItemOrigin'. Comes from
     'Item.Origin'."""
 
+    needed_prestige: int
+    """Prestige required to unlock this specialist. Usually applies to the
+    Mythic ones and defaults to zero. Comes from 'Item.NeededPrestige'."""
+
+    mythic_effect: Effect | None
+    """New mythic effect that applies for a few specialists. Comes from 'Item.MythicEffect'."""
+
+    is_hero_racer: bool
+    """Flag to notify if a specialist is a heroic racer (no idea what it does atm). Comes from 'Item.IsHeroRacer'."""
+
 
 class Item(AssetWithEffect, template_names="Item"):
     """
@@ -101,12 +112,20 @@ class Item(AssetWithEffect, template_names="Item"):
         trade_value = cast("int | None", self.find_value("Item.TradePrice")) or 0
         origin_text = cast("ItemOrigin | None", self.find_value("Item.Origin"))
 
+        # Get the new race and mythic effects, as example: Brother Brauda, Bread Bravura (GUID: 160522)
+        mythic_eff = cast("Effect | None", self.find_ref("Item.MythicEffect"))
+        is_hero_racer = cast("bool | None", self.find_value("Item.IsHeroRacer")) or False
+        need_prestige = cast("int | None", self.find_value("Item.NeededPrestige")) or 0
+
         return ItemInfo(
             allocation=allocation_text or ItemAllocation.VILLA,
             rarity=rarity_text or RarityVisualization.COMMON,
             niche=niche_text or NicheVisualization.NONE,
             trade_price=trade_value,
             origin=origin_text or ItemOrigin.BASE_RELEASE,
+            mythic_effect=mythic_eff,
+            is_hero_racer=is_hero_racer,
+            needed_prestige=need_prestige,
         )
 
 

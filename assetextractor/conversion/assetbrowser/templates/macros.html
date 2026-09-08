@@ -68,7 +68,7 @@
         </td>
         <td>
             <a href="{{ ref.source.safe_identifier }}.html" title="{{ enhanced_tooltip(ref.source) }}">
-                {{ ref.source.name if ref.source.name else ref.source.identifier }}
+                {{ ref.source.name | striptags if ref.source.name else ref.source.identifier }}
             </a>
         </td>
         {% if key in ["In Reward Pools", "In Asset Pools"] and ref.weight is not none %}
@@ -81,7 +81,7 @@
         <td>{{ ref.source.guid }}</td>
         <td>
             <a href="../assets/{{ ref.source.guid }}.html" title="{{ enhanced_tooltip(ref.source) }}">
-                {{ ref.source.short_description }}
+                {{ ref.source.short_description | striptags }}
             </a>
         </td>
         <td>{{ ref.path if ref.path else "-" }}</td>

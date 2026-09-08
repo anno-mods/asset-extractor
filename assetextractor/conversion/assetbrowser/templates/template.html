@@ -29,17 +29,17 @@
 
                 {% if node.__class__.__name__ == "ReferenceAttribute" %}
                 {% set ref = node() %}
-                <span title="{{ enhanced_tooltip(node) }}">{{node.name}}:
+                <span title="{{ enhanced_tooltip(node) }}">{{ node.name | striptags }}:
                     {% if node.is_variable %}
-                    {{ node.variable_name }} <em>(Variable)</em>
+                    {{ node.variable_name | striptags }} <em>(Variable)</em>
                     {% elif ref is not none %}
-                    <a href="../assets/{{ ref.safe_identifier }}.html" title="{{ enhanced_tooltip(ref) }}">{{ ref.name if ref.name else ref }}</a>
+                    <a href="../assets/{{ ref.safe_identifier }}.html" title="{{ enhanced_tooltip(ref) }}">{{ ref.name | striptags if ref.name else ref | striptags }}</a>
                     {% else %}
                     None
                     {% endif %}
                 </span>
                 {% elif node.is_compound %}
-                <span title="{{ enhanced_tooltip(node) }}">{{ node.name if node.name else node }}</span>
+                <span title="{{ enhanced_tooltip(node) }}">{{ node.name | striptags if node.name else node | striptags }}</span>
                 <ul>
                     {% for child in node %}
                     {% set inherited = (child.parent != node) %}
@@ -54,9 +54,9 @@
                 {% else %}
                 <span title="{{ enhanced_tooltip(node) }}">
                     {% if node.is_variable is defined and node.is_variable %}
-                    {{ node.name }}: {{ node.variable_name }} <em>(Variable)</em>
+                    {{ node.name | striptags }}: {{ node.variable_name | striptags }} <em>(Variable)</em>
                     {% else %}
-                    {{ node }}
+                    {{ node | striptags }}
                     {% endif %}
                 </span>
                 {% endif %}

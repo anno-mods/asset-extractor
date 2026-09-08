@@ -123,6 +123,7 @@ class RarityVisualization(StrEnum):
     RARE = "Rare"
     EPIC = "Epic"
     LEGENDARY = "Legendary"
+    MYTHIC = "Mythic"
     QUEST = "Quest"
     UNIQUE = "Unique"
 
@@ -187,3 +188,15 @@ class UplayProductType(StrEnum):
     PREORDER_BONUS = "PreOrderBonus"
     TWITCH_DROP = "TwitchDrop"
     LANGUAGE_PACK = "LanguagePack"
+
+
+class AchievementDifficultyType(StrEnum):
+    """
+    Dataset 'AchievementDifficulty' (Id 252), backed by the 'Choice' property
+    'Achievement.AchievementDifficulty' (schema default: Bronze). Verified against
+    real 'Achievement' assets in assets.xml (e.g. GUID 80528 = Silver, 80536 = Gold).
+    """
+
+    BRONZE = "Bronze"
+    SILVER = "Silver"
+    GOLD = "Gold"

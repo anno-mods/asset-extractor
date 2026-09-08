@@ -5,7 +5,6 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Dict, List, Sequence, Union, cast
 
 from assetextractor.parsing.core.assets import Asset
-from assetextractor.parsing.typed.asset_pool_named import AssetPoolNamed
 from assetextractor.parsing.typed.buffs import BUFF_CLASSES, BuffKey
 from assetextractor.parsing.typed.buildings import AssetBuildingBase
 from assetextractor.parsing.typed.common.asset_pool_base import AssetPoolBase
@@ -25,7 +24,7 @@ ChainKey = Union["ProductionChain", "AssetPoolBase", "AssetFactoryBase"]
 ChainMapping = Dict[ChainKey, Dict[int, "AssetFactoryBase"]]
 
 # Shared type definition for targets.
-TargetKey = Union[AssetPoolNamed, AssetFactoryBase, AssetBuildingBase]
+TargetKey = Union[AssetPoolBase, AssetFactoryBase, AssetBuildingBase]
 
 
 @dataclass(frozen=True)
@@ -88,11 +87,10 @@ class AssetWithEffect(Asset):
         out: List[TargetKey] = []
         for entry in cast("ListAttribute", self.find("Effect.Targets")):
             target = entry.find_ref("GUID")
-            if isinstance(target, (AssetPoolNamed, AssetFactoryBase, AssetBuildingBase)):
+            if isinstance(target, (AssetPoolBase, AssetFactoryBase, AssetBuildingBase)):
                 out.append(target)
         return out
-    
-    
+
     @cached_property
     def production_chains_by_target(
         self,
@@ -203,7 +201,7 @@ class AssetWithEffect(Asset):
         flat_targeted_buildings: List[AssetFactoryBase] = []
 
         for target_pool in self.targets:
-            if isinstance(target_pool, AssetPoolNamed):
+            if isinstance(target_pool, AssetPoolBase):
                 pool_named_asset = target_pool
                 nested_pools = [sub for sub in pool_named_asset.asset_pool_list if isinstance(sub, AssetPoolBase)]
 

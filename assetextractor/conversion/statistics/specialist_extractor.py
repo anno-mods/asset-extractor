@@ -186,6 +186,10 @@ class SpecialistExtractor:
     # Dynamic format variable controlling visual separation lines globally
     DEFAULT_PRINT_WIDTH = 100
 
+    @staticmethod
+    def __is_asset_pool_tpl(tpl_name: str) -> bool:
+        return tpl_name in ["AssetPoolNamed", "AssetPool"]
+
     def __init__(self, assets: AssetCache, language: str = "english"):
         """Initialize the specialists extractor.
 
@@ -363,14 +367,14 @@ class SpecialistExtractor:
         return items
 
     def _build_target_node(self, target_asset: Asset) -> TargetAssetJSON:
-        is_named_pool = target_asset.template.name == "AssetPoolNamed"
+        is_asset_pool = self.__is_asset_pool_tpl(target_asset.template.name)
         return {
             "guid": target_asset.guid,
             "name": target_asset.name,
             "title": target_asset.text() if target_asset.text else target_asset.name,
-            "asset_pool_guid": target_asset.guid if is_named_pool else None,
+            "asset_pool_guid": target_asset.guid if is_asset_pool else None,
             "asset_pool_title": (target_asset.text() if target_asset.text else target_asset.name)
-            if is_named_pool
+            if is_asset_pool
             else None,
             "affected_items": self._get_flattened_affected_items(target_asset),
         }
@@ -531,9 +535,9 @@ class SpecialistExtractor:
                     "targets": [
                         {
                             "guid": t.guid,
-                            "asset_pool_guid": t.guid if t.template.name == "AssetPoolNamed" else None,
+                            "asset_pool_guid": t.guid if self.__is_asset_pool_tpl(t.template.name) else None,
                             "asset_pool_title": (t.text() if t.text else t.name)
-                            if t.template.name == "AssetPoolNamed"
+                            if self.__is_asset_pool_tpl(t.template.name)
                             else None,
                             "affected_items": [i["guid"] for i in self._get_flattened_affected_items(t)],
                         }

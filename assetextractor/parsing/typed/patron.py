@@ -11,8 +11,8 @@ from assetextractor.parsing.core.attributes import FileNameAttribute, WandImageP
 if TYPE_CHECKING:
     from assetextractor.parsing.core.attributes import ListAttribute
     from assetextractor.parsing.core.texts import Text
-    from assetextractor.parsing.typed.asset_pool_named import AssetPoolNamed
     from assetextractor.parsing.typed.buildings.mini_institution_building import MiniInstitutionBuilding
+    from assetextractor.parsing.typed.common.asset_pool_base import AssetPoolBase
     from assetextractor.parsing.typed.effect import Effect
 
 
@@ -197,13 +197,13 @@ class Patron(Asset, template_names="Patron"):
     @cached_property
     def shrine_effect(self) -> ShrineEffect:
         """
-        Maps the 'Shrine' AssedPoolNamed path into a single effect that
+        Maps the 'Shrine' AssetPoolBase path into a single effect that
         contains the list of shrines 'MiniInstitutionBuilding' assets (usually
         Roman and Celtic region).
         """
         shrines_list: List[MiniInstitutionBuilding] = []
 
-        shrine_asset = cast("AssetPoolNamed", self.find_ref("Patron.Shrine"))
+        shrine_asset = cast("AssetPoolBase", self.find_ref("Patron.Shrine"))
         shrine_buildings = shrine_asset.asset_pool_list
 
         for building in cast("List[MiniInstitutionBuilding]", shrine_buildings):
