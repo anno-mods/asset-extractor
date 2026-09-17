@@ -1,4 +1,4 @@
-"""Tests for AchievementExtractor.export_all_achievement_assets dedup behavior."""
+"""Tests for AchievementExtractor.export_all_assets dedup behavior."""
 
 from assetextractor.conversion.statistics.achievement_extractor import AchievementExtractor
 from assetextractor.conversion.statistics.icon_processor import IconProcessor
@@ -36,7 +36,7 @@ def test_achievement_in_single_set_exported_once(monkeypatch):
     ach = _FakeAchievement(1)
     extractor = _make_extractor({100: _FakeAchievementSet([ach])})
 
-    extractor.export_all_achievement_assets(output_base="unused")
+    extractor.export_all_assets(output_base="unused")
 
     assert captured["assets"] == [ach]
 
@@ -45,13 +45,10 @@ def test_achievement_shared_across_sets_appears_once(monkeypatch):
     captured = _capture_export_icons(monkeypatch)
     shared = _FakeAchievement(42)
     extractor = _make_extractor(
-        {
-            100: _FakeAchievementSet([shared]),
-            101: _FakeAchievementSet([shared, _FakeAchievement(2)]),
-        }
+        {100: _FakeAchievementSet([shared]), 101: _FakeAchievementSet([shared, _FakeAchievement(2)])}
     )
 
-    extractor.export_all_achievement_assets(output_base="unused")
+    extractor.export_all_assets(output_base="unused")
 
     guids = [a.guid for a in captured["assets"]]
     assert guids.count(42) == 1
@@ -70,6 +67,6 @@ def test_empty_achievement_sets_triggers_extract_all(monkeypatch):
 
     extractor.extract_all = fake_extract_all
 
-    extractor.export_all_achievement_assets(output_base="unused")
+    extractor.export_all_assets(output_base="unused")
 
     assert captured["assets"] == [fallback_ach]

@@ -198,27 +198,6 @@ class AchievementExtractor:
 
         return standard_assets
 
-    def export_all_achievement_assets(
-        self,
-        output_base: Path | str,
-        quality: int = 75,
-        resize: tuple[int, int] | None = (128, 128),
-        flatten: bool = False,
-    ) -> None:
-        """Exports all achievement-related icons."""
-        output_path = Path(output_base)
-        standard_assets = self._collect_unique_achievements()
-
-        print(f"Exporting {len(standard_assets)} achievement icons...")
-        IconProcessor.export_icons(
-            assets=standard_assets,
-            output_base=output_path,
-            flatten=flatten,
-            quality=quality,
-            resize=resize,
-            use_canonical_name=True,
-        )
-
     def export_all_assets(
         self,
         output_base: Path | str,
