@@ -2,6 +2,8 @@
 
 from enum import StrEnum
 
+from typing_extensions import Literal
+
 
 class BuildingType(StrEnum):
     """Define the dataset 'BuildingType' that must contain 8 values."""
@@ -23,6 +25,9 @@ class Region(StrEnum):
     ROMAN = "Roman"
     CELTIC = "Celtic"
     EGYPTIAN = "Egyptian"
+
+
+NoMetaRegion = Literal[Region.ROMAN, Region.CELTIC, Region.EGYPTIAN]
 
 
 class IslandType(StrEnum):
