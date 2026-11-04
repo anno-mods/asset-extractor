@@ -139,16 +139,18 @@ class Item(AssetWithEffect, template_names="Item"):
     def print_racer_info(self, prefix: str = "") -> None:
         """Prints the racer track configuration, mythic effect, and hero racer status in a tree-style format."""
         i_info = self.item_info
+
+        print(f"{prefix}Racer Info:")
         if i_info.race_track_config:
             racer_preset_info = i_info.race_track_config.racer_preset_info
 
-            print(f"{prefix} Racer Preset:      {i_info.race_track_config.name}")
-            print(f"{prefix} Min Training Lvls:            {racer_preset_info.min_additional_training_levels}")
-            print(f"{prefix} Max Training Lvls:            {racer_preset_info.max_additional_training_levels}")
+            print(f"{prefix}  Racer Preset:      {i_info.race_track_config.name}")
+            print(f"{prefix}  Min Training Lvls:            {racer_preset_info.min_additional_training_levels}")
+            print(f"{prefix}  Max Training Lvls:            {racer_preset_info.max_additional_training_levels}")
 
-            print(f"{prefix} Additional Training Increase Chances:")
+            print(f"{prefix}  Additional Training Increase Chances:")
             for chance in racer_preset_info.additional_training_increase_chances:
-                print(f"{prefix}   - {chance}")
+                print(f"{prefix}    - {chance}")
 
             attributes = {
                 "Speed": racer_preset_info.racer_attribute_overwrites.speed,
@@ -158,18 +160,18 @@ class Item(AssetWithEffect, template_names="Item"):
             }
 
             for attribute_name, attribute_values in attributes.items():
-                print(f"{prefix} {attribute_name}:")
-                print(f"{prefix}   Min Initial Value:      {attribute_values.min_initial_value}")
-                print(f"{prefix}   Max Initial Value:      {attribute_values.max_initial_value}")
-                print(f"{prefix}   Min Added Potential:    {attribute_values.min_added_potential}")
-                print(f"{prefix}   Max Added Potential:    {attribute_values.max_added_potential}")
+                print(f"{prefix}  {attribute_name}:")
+                print(f"{prefix}    Min Initial Value:      {attribute_values.min_initial_value}")
+                print(f"{prefix}    Max Initial Value:      {attribute_values.max_initial_value}")
+                print(f"{prefix}    Min Added Potential:    {attribute_values.min_added_potential}")
+                print(f"{prefix}    Max Added Potential:    {attribute_values.max_added_potential}")
         else:
-            print(f"{prefix} Racer Preset:      None")
+            print(f"{prefix}  Racer Preset:      None")
 
         if i_info.mythic_effect:
-            print(f"{prefix} Mythic Effect:     {i_info.mythic_effect.name}")
+            print(f"{prefix}  Mythic Effect:     {i_info.mythic_effect.name}")
         if i_info.is_hero_racer:
-            print(f"{prefix} Hero Racer:        {i_info.is_hero_racer}")
+            print(f"{prefix}  Hero Racer:        {i_info.is_hero_racer}")
 
 
 class ItemWithBoost(Item, template_names="ItemWithBoost"):
