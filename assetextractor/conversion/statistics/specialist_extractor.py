@@ -476,6 +476,9 @@ class SpecialistExtractor:
         print(f"Trade Price:   {info.trade_price}")
         print(f"Origin:        {info.origin.value if hasattr(info.origin, 'value') else info.origin}")
 
+        # Print the racer preset info if available
+        item.print_racer_info(prefix="     ")
+
         if is_boost:
             print(f"{'-' * self.print_width}")
             item.print_boost_info(prefix="     ")
