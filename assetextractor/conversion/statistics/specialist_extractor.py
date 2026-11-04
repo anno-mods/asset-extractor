@@ -101,6 +101,30 @@ class SpecialistBoostJSON(TypedDict):
     buffs: List[BuffModifierJSON]
 
 
+class RacerAttributeJSON(TypedDict):
+    min_initial_value: int
+    max_initial_value: int
+    min_added_potential: int
+    max_added_potential: int
+
+
+class RacerAttributeSetJSON(TypedDict):
+    speed: RacerAttributeJSON
+    stamina: RacerAttributeJSON
+    boost: RacerAttributeJSON
+    consistency: RacerAttributeJSON
+
+
+class RacerInfoJSON(TypedDict):
+    preset_name: str | None
+    min_additional_training_levels: int | None
+    max_additional_training_levels: int | None
+    additional_training_increase_chances: List[str]
+    attribute_overwrites: RacerAttributeSetJSON | None
+    # mythic_effect: str | None
+    is_hero_racer: bool
+
+
 class SpecialistItemJSON(TypedDict):
     guid: int
     name: str
@@ -114,6 +138,7 @@ class SpecialistItemJSON(TypedDict):
     origin: str
     has_boost: bool
     boost_details: SpecialistBoostJSON | None
+    racer: RacerInfoJSON | None
     effect: SpecialistEffectJSON | None
 
 
@@ -156,6 +181,16 @@ class SimplifiedBoost(TypedDict):
     buffs: List[SimplifiedBuff]
 
 
+class SimplifiedRacer(TypedDict):
+    preset_name: str | None
+    min_additional_training_levels: int | None
+    max_additional_training_levels: int | None
+    additional_training_increase_chances: List[str]
+    attribute_overwrites: RacerAttributeSetJSON | None
+    # mythic_effect: str | None
+    is_hero_racer: bool
+
+
 class SimplifiedSpecialist(TypedDict):
     icon_url: str
     title: str
@@ -165,6 +200,7 @@ class SimplifiedSpecialist(TypedDict):
     allocation: str
     has_boost: bool
     boost_details: SimplifiedBoost | None
+    racer: SimplifiedRacer | None
     effect: SimplifiedEffect
 
 
@@ -353,6 +389,56 @@ class SpecialistExtractor:
             "workforce_modifier_in_percent": workforce_mod,
         }
 
+    def _serialize_racer_info(self, item: Item) -> RacerInfoJSON | None:
+        """Serializes racer-track metadata for item exports."""
+        info = item.item_info
+        preset = info.race_track_config
+
+        if preset is None and info.mythic_effect is None and not info.is_hero_racer:
+            return None
+
+        race_preset = preset.racer_preset_info if preset is not None else None
+        attribute_overwrites: RacerAttributeSetJSON | None = None
+        if race_preset is not None:
+            attribute_overwrites = {
+                "speed": {
+                    "min_initial_value": race_preset.racer_attribute_overwrites.speed.min_initial_value,
+                    "max_initial_value": race_preset.racer_attribute_overwrites.speed.max_initial_value,
+                    "min_added_potential": race_preset.racer_attribute_overwrites.speed.min_added_potential,
+                    "max_added_potential": race_preset.racer_attribute_overwrites.speed.max_added_potential,
+                },
+                "stamina": {
+                    "min_initial_value": race_preset.racer_attribute_overwrites.stamina.min_initial_value,
+                    "max_initial_value": race_preset.racer_attribute_overwrites.stamina.max_initial_value,
+                    "min_added_potential": race_preset.racer_attribute_overwrites.stamina.min_added_potential,
+                    "max_added_potential": race_preset.racer_attribute_overwrites.stamina.max_added_potential,
+                },
+                "boost": {
+                    "min_initial_value": race_preset.racer_attribute_overwrites.boost.min_initial_value,
+                    "max_initial_value": race_preset.racer_attribute_overwrites.boost.max_initial_value,
+                    "min_added_potential": race_preset.racer_attribute_overwrites.boost.min_added_potential,
+                    "max_added_potential": race_preset.racer_attribute_overwrites.boost.max_added_potential,
+                },
+                "consistency": {
+                    "min_initial_value": race_preset.racer_attribute_overwrites.consistency.min_initial_value,
+                    "max_initial_value": race_preset.racer_attribute_overwrites.consistency.max_initial_value,
+                    "min_added_potential": race_preset.racer_attribute_overwrites.consistency.min_added_potential,
+                    "max_added_potential": race_preset.racer_attribute_overwrites.consistency.max_added_potential,
+                },
+            }
+
+        return {
+            "preset_name": preset.name if preset is not None else None,
+            "min_additional_training_levels": race_preset.min_additional_training_levels if race_preset else None,
+            "max_additional_training_levels": race_preset.max_additional_training_levels if race_preset else None,
+            "additional_training_increase_chances": race_preset.additional_training_increase_chances
+            if race_preset
+            else [],
+            "attribute_overwrites": attribute_overwrites,
+            # "mythic_effect": info.mythic_effect.name if info.mythic_effect is not None else None,
+            "is_hero_racer": info.is_hero_racer,
+        }
+
     def _serialize_targets(self, targets_sequence: Sequence[Asset]) -> List[TargetAssetJSON]:
         return [self._build_target_node(target) for target in targets_sequence]
 
@@ -479,7 +565,6 @@ class SpecialistExtractor:
         # Keep racer details in their own dedicated section before boost/buff/target output.
         print(f"{'-' * self.print_width}")
         item.print_racer_info(prefix="")
-        print(f"{'-' * self.print_width}")
 
         if is_boost:
             print(f"{'-' * self.print_width}")
@@ -536,6 +621,7 @@ class SpecialistExtractor:
                 "allocation": item.item_info.allocation,
                 "has_boost": isinstance(item, ItemWithBoost),
                 "boost_details": None,
+                "racer": None,
                 "effect": {
                     "scope": item.effect_info.effect_scope,
                     "category": item.effect_info.source_category,
@@ -553,6 +639,19 @@ class SpecialistExtractor:
                     "buffs": [],
                 },
             }
+
+            racer_info = self._serialize_racer_info(item)
+            if racer_info is not None:
+                racer_data: SimplifiedRacer = {
+                    "preset_name": racer_info["preset_name"],
+                    "min_additional_training_levels": racer_info["min_additional_training_levels"],
+                    "max_additional_training_levels": racer_info["max_additional_training_levels"],
+                    "additional_training_increase_chances": racer_info["additional_training_increase_chances"],
+                    "attribute_overwrites": racer_info["attribute_overwrites"],
+                    # "mythic_effect": racer_info["mythic_effect"],
+                    "is_hero_racer": racer_info["is_hero_racer"],
+                }
+                simplified_data[str(item.guid)]["racer"] = racer_data
 
             main_target_guids = [t.guid for t in item.targets]
 
@@ -762,6 +861,7 @@ class SpecialistExtractor:
                     "buffs": [self._serialize_single_buff_modifiers(b) for b in b_info.boost_buffs],
                 }
 
+            racer = self._serialize_racer_info(item)
             output_dict[str(item.guid)] = {
                 "guid": item.guid,
                 "name": std.std_name,
@@ -781,6 +881,7 @@ class SpecialistExtractor:
                 "origin": info.origin,
                 "has_boost": has_boost,
                 "boost_details": boost_details,
+                "racer": racer,
                 "effect": effect_data,
             }
 
