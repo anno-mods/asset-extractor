@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from assetextractor.parsing.typed.common.upgrades.factory_upgrade import AddedFertilityJSON
     from assetextractor.parsing.typed.common.upgrades.maintenance_upgrade import ReplacementWorkforceJSON
     from assetextractor.parsing.typed.common.upgrades.residence_upgrade import ProductNeedUpgradeJSON
+    from assetextractor.parsing.typed.dlc02.item_racer_preset import ItemRacerPreset
     from assetextractor.parsing.typed.effect import Effect
 
 # Safely import IPython's display for Jupyter Notebook integration
@@ -191,6 +192,17 @@ class SimplifiedRacer(TypedDict):
     is_hero_racer: bool
 
 
+class ItemRacerPresetJSON(TypedDict):
+    guid: int
+    name: str
+    title: str
+    min_additional_training_levels: int | None
+    max_additional_training_levels: int | None
+    additional_training_increase_chances: List[str]
+    attribute_overwrites: RacerAttributeSetJSON | None
+    is_hero_racer: bool
+
+
 class SimplifiedSpecialist(TypedDict):
     icon_url: str
     title: str
@@ -200,7 +212,7 @@ class SimplifiedSpecialist(TypedDict):
     allocation: str
     has_boost: bool
     boost_details: SimplifiedBoost | None
-    racer: SimplifiedRacer | None
+    racer: str | SimplifiedRacer | None
     effect: SimplifiedEffect
 
 
@@ -640,18 +652,10 @@ class SpecialistExtractor:
                 },
             }
 
-            racer_info = self._serialize_racer_info(item)
-            if racer_info is not None:
-                racer_data: SimplifiedRacer = {
-                    "preset_name": racer_info["preset_name"],
-                    "min_additional_training_levels": racer_info["min_additional_training_levels"],
-                    "max_additional_training_levels": racer_info["max_additional_training_levels"],
-                    "additional_training_increase_chances": racer_info["additional_training_increase_chances"],
-                    "attribute_overwrites": racer_info["attribute_overwrites"],
-                    # "mythic_effect": racer_info["mythic_effect"],
-                    "is_hero_racer": racer_info["is_hero_racer"],
-                }
-                simplified_data[str(item.guid)]["racer"] = racer_data
+            preset_guid = None
+            if item.item_info.race_track_config is not None:
+                preset_guid = str(item.item_info.race_track_config.guid)
+            simplified_data[str(item.guid)]["racer"] = preset_guid
 
             main_target_guids = [t.guid for t in item.targets]
 
@@ -731,6 +735,67 @@ class SpecialistExtractor:
             json.dump(simplified_data, f, indent=4)
 
         print(f"Simplified export completed to {output_path}")
+
+    def export_racer_preset_json(self, output_path: Path | str) -> None:
+        """Exports all ItemRacerPreset assets keyed by GUID.
+
+        The simplified specialist export keeps only a GUID reference to the preset,
+        while this registry stores the full preset metadata for lookup.
+        """
+        presets: Dict[str, ItemRacerPresetJSON] = {}
+
+        tpl_presets = self.assets.templates.get("ItemRacerPreset")
+        if tpl_presets is None:
+            with open(output_path, "w", encoding="utf-8") as f:
+                json.dump({}, f, indent=4)
+            print(f"Item racer preset export completed to {output_path}")
+            return
+
+        for preset in sorted(tpl_presets.assets, key=lambda asset: asset.guid):
+            preset_info = cast("ItemRacerPreset", preset).racer_preset_info
+
+            attribute_overwrites: RacerAttributeSetJSON | None = {
+                "speed": {
+                    "min_initial_value": preset_info.racer_attribute_overwrites.speed.min_initial_value,
+                    "max_initial_value": preset_info.racer_attribute_overwrites.speed.max_initial_value,
+                    "min_added_potential": preset_info.racer_attribute_overwrites.speed.min_added_potential,
+                    "max_added_potential": preset_info.racer_attribute_overwrites.speed.max_added_potential,
+                },
+                "stamina": {
+                    "min_initial_value": preset_info.racer_attribute_overwrites.stamina.min_initial_value,
+                    "max_initial_value": preset_info.racer_attribute_overwrites.stamina.max_initial_value,
+                    "min_added_potential": preset_info.racer_attribute_overwrites.stamina.min_added_potential,
+                    "max_added_potential": preset_info.racer_attribute_overwrites.stamina.max_added_potential,
+                },
+                "boost": {
+                    "min_initial_value": preset_info.racer_attribute_overwrites.boost.min_initial_value,
+                    "max_initial_value": preset_info.racer_attribute_overwrites.boost.max_initial_value,
+                    "min_added_potential": preset_info.racer_attribute_overwrites.boost.min_added_potential,
+                    "max_added_potential": preset_info.racer_attribute_overwrites.boost.max_added_potential,
+                },
+                "consistency": {
+                    "min_initial_value": preset_info.racer_attribute_overwrites.consistency.min_initial_value,
+                    "max_initial_value": preset_info.racer_attribute_overwrites.consistency.max_initial_value,
+                    "min_added_potential": preset_info.racer_attribute_overwrites.consistency.min_added_potential,
+                    "max_added_potential": preset_info.racer_attribute_overwrites.consistency.max_added_potential,
+                },
+            }
+
+            presets[str(preset.guid)] = {
+                "guid": preset.guid,
+                "name": preset.name,
+                "title": preset.text() if preset.text else preset.name,
+                "min_additional_training_levels": preset_info.min_additional_training_levels,
+                "max_additional_training_levels": preset_info.max_additional_training_levels,
+                "additional_training_increase_chances": preset_info.additional_training_increase_chances,
+                "attribute_overwrites": attribute_overwrites,
+                "is_hero_racer": False,
+            }
+
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(presets, f, indent=4)
+
+        print(f"Item racer preset export completed to {output_path}")
 
     def export_assets_index_json(
         self, output_path: Path, web_base_path: str | None = None, flatten: bool = True
