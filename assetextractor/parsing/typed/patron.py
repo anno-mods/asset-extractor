@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING, List, cast
 
 from assetextractor.parsing.core.assets import Asset
 from assetextractor.parsing.core.attributes import FileNameAttribute, WandImageProto
+from assetextractor.parsing.typed.buildings.mini_institution_building import MiniInstitutionBuilding
+from assetextractor.parsing.typed.common.asset_pool_base import AssetPoolBase
 
 if TYPE_CHECKING:
     from assetextractor.parsing.core.attributes import ListAttribute
     from assetextractor.parsing.core.texts import Text
-    from assetextractor.parsing.typed.buildings.mini_institution_building import MiniInstitutionBuilding
-    from assetextractor.parsing.typed.common.asset_pool_base import AssetPoolBase
     from assetextractor.parsing.typed.effect import Effect
 
 
@@ -202,11 +202,16 @@ class Patron(Asset, template_names="Patron"):
         Roman and Celtic region).
         """
         shrines_list: List[MiniInstitutionBuilding] = []
+        shrine_asset = self.find_ref("Patron.Shrine")
 
-        shrine_asset = cast("AssetPoolBase", self.find_ref("Patron.Shrine"))
-        shrine_buildings = shrine_asset.asset_pool_list
-
-        for building in cast("List[MiniInstitutionBuilding]", shrine_buildings):
-            shrines_list.append(building)
+        if isinstance(shrine_asset, MiniInstitutionBuilding):
+            shrines_list.append(shrine_asset)
+        elif isinstance(shrine_asset, AssetPoolBase):
+            shrine_buildings = shrine_asset.asset_pool_list
+            for sub_building in shrine_buildings:
+                if isinstance(sub_building, MiniInstitutionBuilding):
+                    shrines_list.append(sub_building)
+        else:
+            raise TypeError(f"Unexpected building type in shrine asset pool: {type(shrine_asset).__name__}")
 
         return ShrineEffect(guid=shrine_asset.guid, name=shrine_asset.name, shrines=shrines_list)
