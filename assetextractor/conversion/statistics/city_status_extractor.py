@@ -20,6 +20,7 @@ class CityStatusEntryJSON(TypedDict):
     """Export representation for one city-status level."""
 
     guid: str
+    std_name: str
     name: str
     icon_url: str
     required_population: int
@@ -141,7 +142,6 @@ class CityStatusExtractor:
         """
         info = asset.city_status_info
         guid = info.guid
-        name = info.name
         incident_interval = info.incident_interval
         level_population = self.required_population_by_guid.get(asset.guid, 0)
 
@@ -163,7 +163,8 @@ class CityStatusExtractor:
 
         return {
             "guid": str(guid),
-            "name": name,
+            "std_name": info.name,
+            "name": info.title,
             "icon_url": icon_path,
             "required_population": level_population,
             "incident_interval": incident_payload,
@@ -215,7 +216,9 @@ class CityStatusExtractor:
 
         for region, payload in self.to_json_dict(web_base_path=web_base_path, flatten=flatten).items():
             file_path = output_dir / f"city_status_{region}.json"
-            levels_by_name = {"_".join(level["name"].split()[-2:]).lower(): level for level in payload["levels"]}
+            print(f"Exporting {region} city statuses to {file_path}...")
+            # Split the standard name into words, take the last two, join with underscores, and lowercase for the key
+            levels_by_name = {"_".join(level["std_name"].split()[-2:]).lower(): level for level in payload["levels"]}
             with file_path.open("w", encoding="utf-8") as handle:
                 json.dump(levels_by_name, handle, indent=4, ensure_ascii=False)
             print(f"Successfully exported {region} city statuses to {file_path}")

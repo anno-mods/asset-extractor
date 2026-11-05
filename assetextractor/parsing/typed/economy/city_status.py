@@ -12,6 +12,8 @@ from assetextractor.parsing.typed.common.enums import Region
 if TYPE_CHECKING:
     from datetime import timedelta
 
+    from assetextractor.parsing.core.attributes import TextAttribute
+
 
 _ATTRIBUTE_KEYS = (
     ("belief", "Belief.Value"),
@@ -130,13 +132,14 @@ class CityStatus(Asset, template_names="CityStatus"):
 
     @cached_property
     def city_status_info(self) -> CityStatusInfo:
-        title = cast("str | None", self.find_value("CityStatus.CityStatusName"))
+        title = cast("TextAttribute | None", self.find_value("CityStatus.CityStatusName"))
         region = self.region
+        name = self.name or ""
 
         return CityStatusInfo(
             guid=self.guid,
-            name=self.name,
-            title=title if title else self.name or "",
+            name=name,
+            title=title() if title else name,
             region=region,
             incident_interval=self.incident_interval_info,
             attribute_effects_roman=self._extract_effect_group("CityStatus.AttributeEffectsRoman"),
