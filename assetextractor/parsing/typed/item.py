@@ -18,6 +18,8 @@ from assetextractor.parsing.typed.common.enums import (
 if TYPE_CHECKING:
     from assetextractor.parsing.core.attributes import WandImageProto
     from assetextractor.parsing.core.texts import Text
+    from assetextractor.parsing.typed.dlc02.item_racer_preset import ItemRacerPreset
+    from assetextractor.parsing.typed.effect import Effect
 
 
 @dataclass(frozen=True)
@@ -69,6 +71,19 @@ class ItemInfo:
     """Specific item origin type from dataset 'ItemOrigin'. Comes from
     'Item.Origin'."""
 
+    needed_prestige: int
+    """Prestige required to unlock this specialist. Usually applies to the
+    Mythic ones and defaults to zero. Comes from 'Item.NeededPrestige'."""
+
+    race_track_config: ItemRacerPreset | None
+    """The race track configuration for this specialist. Comes from 'Item.RaceTrackConfig'."""
+
+    mythic_effect: Effect | None
+    """New mythic effect that applies for a few specialists. Comes from 'Item.MythicEffect'."""
+
+    is_hero_racer: bool
+    """Flag to notify if a specialist is a heroic racer (no idea what it does atm). Comes from 'Item.IsHeroRacer'."""
+
 
 class Item(AssetWithEffect, template_names="Item"):
     """
@@ -101,13 +116,62 @@ class Item(AssetWithEffect, template_names="Item"):
         trade_value = cast("int | None", self.find_value("Item.TradePrice")) or 0
         origin_text = cast("ItemOrigin | None", self.find_value("Item.Origin"))
 
+        # Get the new race and mythic effects, as example: Brother Brauda, Bread Bravura (GUID: 160522)
+        mythic_eff = cast("Effect | None", self.find_ref("Item.MythicEffect"))
+        is_hero_racer = cast("bool | None", self.find_value("Item.IsHeroRacer")) or False
+        need_prestige = cast("int | None", self.find_value("Item.NeededPrestige")) or 0
+
+        # Racer track configuration, if any. Comes from 'Item.RaceTrackConfig'.
+        race_track_config = cast("ItemRacerPreset | None", self.find_ref("Item.RaceTrackConfig.ItemRacerPreset"))
+
         return ItemInfo(
             allocation=allocation_text or ItemAllocation.VILLA,
             rarity=rarity_text or RarityVisualization.COMMON,
             niche=niche_text or NicheVisualization.NONE,
             trade_price=trade_value,
             origin=origin_text or ItemOrigin.BASE_RELEASE,
+            mythic_effect=mythic_eff,
+            is_hero_racer=is_hero_racer,
+            needed_prestige=need_prestige,
+            race_track_config=race_track_config,
         )
+
+    def print_racer_info(self, prefix: str = "") -> None:
+        """Prints the racer track configuration, mythic effect, and hero racer status in a tree-style format."""
+        i_info = self.item_info
+
+        print(f"{prefix}Racer Info:")
+        if i_info.race_track_config:
+            racer_preset_info = i_info.race_track_config.racer_preset_info
+
+            print(f"{prefix}  Racer Preset:      {i_info.race_track_config.name}")
+            print(f"{prefix}  Min Training Lvls:            {racer_preset_info.min_additional_training_levels}")
+            print(f"{prefix}  Max Training Lvls:            {racer_preset_info.max_additional_training_levels}")
+
+            print(f"{prefix}  Additional Training Increase Chances:")
+            for chance in racer_preset_info.additional_training_increase_chances:
+                print(f"{prefix}    - {chance}")
+
+            attributes = {
+                "Speed": racer_preset_info.racer_attribute_overwrites.speed,
+                "Stamina": racer_preset_info.racer_attribute_overwrites.stamina,
+                "Boost": racer_preset_info.racer_attribute_overwrites.boost,
+                "Consistency": racer_preset_info.racer_attribute_overwrites.consistency,
+            }
+
+            for attribute_name, attribute_values in attributes.items():
+                print(f"{prefix}  {attribute_name}:")
+                print(f"{prefix}    Min Initial Value:      {attribute_values.min_initial_value}")
+                print(f"{prefix}    Max Initial Value:      {attribute_values.max_initial_value}")
+                print(f"{prefix}    Min Added Potential:    {attribute_values.min_added_potential}")
+                print(f"{prefix}    Max Added Potential:    {attribute_values.max_added_potential}")
+        else:
+            print(f"{prefix}  Racer Preset:      None")
+
+        if i_info.mythic_effect:
+            print(f"{prefix}  Mythic Effect:     {i_info.mythic_effect.name}")
+        if i_info.is_hero_racer:
+            print(f"{prefix}  Hero Racer:        {i_info.is_hero_racer}")
 
 
 class ItemWithBoost(Item, template_names="ItemWithBoost"):
