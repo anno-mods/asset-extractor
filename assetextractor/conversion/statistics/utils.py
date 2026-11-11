@@ -50,7 +50,8 @@ def flatten_pool(pool: Asset | None) -> list[int]:
     for entry in pool.AssetPool.AssetList:  # type: ignore
         if entry.Asset() is not None:  # type: ignore  # Last item can sometimes be None
             res += flatten_pool(entry.Asset())  # type: ignore
-    return res
+    # The same asset can be listed in several nested pools
+    return list(dict.fromkeys(res))
 
 
 def get_localized_name(asset: Asset) -> str:

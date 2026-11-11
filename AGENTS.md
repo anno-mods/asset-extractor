@@ -32,6 +32,7 @@ In-depth guides live under `docs/`. Read the relevant file before working on a t
 - UI text mapping (rarity, niche, BuffUpgradeType, etc.) — `docs/ui_text_mapping.md`
 - Boost conditions (`ItemWithBoost`) — `docs/conditions.md`
 - Item sources (traders, tech, quests, expeditions) — `docs/item_sources.md`
+- Assembly factions (island takeover by faction support, seats, regions, modding) — `docs/assembly_factions.md`
 - API patterns (`find` / `find_value`, iteration, formatting) — `docs/api_patterns.md`
 - Typed asset subclasses (registry, writing a subclass, notebook re-wrapping) — `assetextractor/parsing/typed/README.md`
 - Test conventions — `tests/AGENTS.md`

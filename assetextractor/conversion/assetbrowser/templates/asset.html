@@ -4,12 +4,12 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>{{ asset.short_description }}</title>
+    <title>{{ asset.short_description | striptags }}</title>
     <link rel="stylesheet" href="../styles.css">
 </head>
 
 <body>
-    <h1>{{ asset.short_description }}</h1>
+    <h1>{{ asset.short_description | striptags }}</h1>
 
     {# Tab navigation #}
     <div class="tabs">
@@ -34,7 +34,7 @@
                     None
                     {% else %}
                     <a href="{{ node().safe_identifier }}.html" title="{{ enhanced_tooltip(node()) }}">{{
-                        node().short_description }}</a>
+                        node().short_description | striptags }}</a>
                     {% endif %}
                 </span>
                 {% elif node.is_compound %}
@@ -54,9 +54,9 @@
                 {% else %}
                 <span title="{{ enhanced_tooltip(node) }}">
                     {% if node.is_variable %}
-                    {{ node.name }}: {{ node.variable_name }} <em>(Variable)</em>
+                    {{ node.name | striptags }}: {{ node.variable_name | striptags }} <em>(Variable)</em>
                     {% else %}
-                    {{ node }}
+                    {{ node | striptags }}
                     {% endif %}
                 </span>
                 {% endif %}

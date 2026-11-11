@@ -92,6 +92,11 @@ class ItemExtractor:
                     has_direct_refs = hasattr(asset, "referenced_by") and asset.referenced_by
                     is_hall_of_fame = self.source_tracker.is_hall_of_fame_item(asset)
 
+                    # Placeholder items only used as notification icons
+                    if "Fake Item" in asset.name:
+                        skipped_count += 1
+                        continue
+
                     if not (has_pool_refs or has_direct_refs or is_hall_of_fame):
                         skipped_count += 1
                         continue

@@ -7,6 +7,15 @@ from assetextractor.parsing.core.assets import Asset, AssetCache
 from assetextractor.parsing.core.attributes import Attribute, ListAttribute
 from assetextractor.parsing.core.texts import TextCache
 
+# Sequence actions that hand an item to the player as a quest reward
+QUEST_REWARD_ACTIONS = ("ActionAddGoodsToItemContainer", "ActionAddItemToMetaStorage")
+
+# Source types shown in the CSV; achievement, function and trigger references are not real sources
+DISPLAYED_SOURCE_TYPES = ("selling", "contracts", "research", "quest", "drops", "festival", "subjugated", "colosseum")
+
+# "Asset Pool All HoF Specialists", referenced by StatisticsMenu.HallOfFame.BackupOfflinePool
+HALL_OF_FAME_POOL_GUID = 182615
+
 
 class ItemSourceTracker:
     """Discover all sources for an item across 11 source types."""
@@ -58,7 +67,61 @@ class ItemSourceTracker:
         for source_type, source_list in ref_sources.items():
             sources[source_type].extend(source_list)
 
+        # Story items created by the game engine have no explicit reward action; they are only
+        # bound to or swapped in by their quest, so consult those links only as a last resort.
+        if not any(sources[source_type] for source_type in DISPLAYED_SOURCE_TYPES):
+            sources["quest"].extend(self._find_quest_binding_sources(item))
+
         return sources
+
+    def _find_story_line(self, start: Asset, max_depth: int = 12) -> Asset | None:
+        """Breadth-first search up the reference chain for the enclosing StoryLine.
+
+        Args:
+            start: The asset to start searching from
+            max_depth: Maximum number of reference hops
+
+        Returns:
+            StoryLine asset if found, None otherwise
+        """
+        visited = {start.guid}
+        frontier = [start]
+        for _ in range(max_depth):
+            next_frontier: list[Asset] = []
+            for current in frontier:
+                for parent in (ref.source for ref in getattr(current, "referenced_by", {}).values()):
+                    if parent.guid in visited:
+                        continue
+                    if parent.template.name == "StoryLine":
+                        return parent
+                    visited.add(parent.guid)
+                    next_frontier.append(parent)
+            frontier = next_frontier
+            if not frontier:
+                break
+        return None
+
+    def _find_quest_binding_sources(self, item: Asset) -> list[SourceType]:
+        """Find quests that bind this item or swap it in as a replacement item.
+
+        Args:
+            item: The item asset
+
+        Returns:
+            Quest sources, deduplicated by quest
+        """
+        found: dict[int, SourceType] = {}
+        for weighted_ref in getattr(item, "referenced_by", {}).values():
+            path = weighted_ref.path or ""
+            is_binding = "ActionBindItemToQuest" in path or ("ActionReplaceItem" in path and "NewItem" in path)
+            if not is_binding:
+                continue
+            quest = self.quest_tracker.find_quest(weighted_ref.source) or self._find_story_line(weighted_ref.source)
+            if quest is not None and quest.guid not in found:
+                found[quest.guid] = SourceDict(
+                    name=get_source_display_name(quest, self.texts), guid=quest.guid, sequence=weighted_ref.source.guid
+                )
+        return list(found.values())
 
     def _find_pool_sources(self, item: Asset, sources: dict[str, list[SourceType]]) -> None:
         """Find sources from pool references.
@@ -176,7 +239,7 @@ class ItemSourceTracker:
             if (
                 "Sequence" in source.template.name
                 and weighted_ref.path
-                and "ActionAddGoodsToItemContainer" in weighted_ref.path
+                and any(action in weighted_ref.path for action in QUEST_REWARD_ACTIONS)
             ):
                 quest = self.quest_tracker.find_quest(source)
                 if quest is not None:
@@ -316,7 +379,7 @@ class ItemSourceTracker:
         return False, None
 
     def is_hall_of_fame_item(self, asset: Asset) -> bool:
-        """Check if item is a Hall of Fame item by name pattern.
+        """Check if item is a Hall of Fame item by name pattern or Hall of Fame pool membership.
 
         Args:
             asset: The item asset
@@ -324,4 +387,7 @@ class ItemSourceTracker:
         Returns:
             True if this is a Hall of Fame item
         """
-        return "HallOfFame" in asset.name
+        if "HallOfFame" in asset.name:
+            return True
+        referenced_by = getattr(asset, "referenced_by", None)
+        return bool(referenced_by) and HALL_OF_FAME_POOL_GUID in referenced_by

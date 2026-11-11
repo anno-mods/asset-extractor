@@ -327,7 +327,29 @@ class DLCDetector:
 
     def _flatten_asset_pool(self, pool_asset: Asset, dlc_guids: set[int]) -> None:
         pool_guids = self._get_list_guids(pool_asset, "AssetPool.AssetList", "Asset")
-        self._propagate_to_guids(pool_guids, dlc_guids)
+        self._propagate_to_guids([guid for guid in pool_guids if not self._is_base_product(guid)], dlc_guids)
+
+    def _is_base_product(self, guid: int) -> bool:
+        """True if the asset is a Product that is producible in a base-game region.
+
+        DLC03 research techs reward pools like "Asset Pool Research Greco Roman Wine" that
+        mix Egyptian content with base-game goods (Grapes, Wine, Soap, ...) which Egypt is
+        merely allowed to produce. Pool membership must not tag those goods as DLC content.
+        Genuine DLC goods are tagged independently via their DLC icon path (strategy 1).
+        """
+        asset = self._cache.elements.get(guid)
+        if asset is None or not asset.template or asset.template.name != "Product":
+            return False
+        regions = asset.find("Product.ProductionRegions")
+        if not isinstance(regions, ListAttribute):
+            return False
+        for item in regions:
+            try:
+                if str(item.find_value("RegionType")) in self._base_region_names:
+                    return True
+            except Exception:
+                pass
+        return False
 
     def _get_list_guids(self, asset: Asset | ListItem, list_path: str, ref_attr_name: str) -> list[int]:
         """Extract a list of GUIDs from a ListAttribute by following a ReferenceAttribute field."""

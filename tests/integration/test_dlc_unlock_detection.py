@@ -59,6 +59,29 @@ def test_base_sessions_not_dlc_tagged(assets: AssetCache):
     assert 67904 in egypt_session.unlocked_by_dlcs
 
 
+def test_base_goods_in_dlc_research_pools_not_dlc_tagged(assets: AssetCache):
+    """Base-game goods listed in DLC03 research pools must stay untagged.
+
+    The pools 'Asset Pool Research Greco Roman Soap/Wine' (rewards of the DLC03 soap and
+    wine production techs) contain base goods that Egypt may merely produce. Genuine DLC
+    goods (DLC01 Obsidian/Idols/Boardgames, Egyptian goods) are tagged via their icon path.
+    """
+    for guid in (2070, 2071, 2076, 2132, 2138, 2143):
+        good = assets.elements.get(guid)
+        assert good is not None
+        assert dict(good.unlocked_by_dlcs) == {}, (guid, good.unlocked_by_dlcs)
+
+    for guid, dlc in ((145102, 67902), (145220, 67902), (145221, 67902), (151712, 67904)):
+        good = assets.elements.get(guid)
+        assert good is not None
+        assert dlc in good.unlocked_by_dlcs, guid
+
+    # Non-product pool members (Egyptian-region building variants) stay tagged.
+    wine_production = assets.elements.get(152387)
+    assert wine_production is not None
+    assert 67904 in wine_production.unlocked_by_dlcs
+
+
 def test_dlc_bidirectional_references(assets: AssetCache):
     """Test that DLC references are correctly populated in both directions."""
     # Find any asset with DLC unlocks

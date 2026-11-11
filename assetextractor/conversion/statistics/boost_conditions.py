@@ -130,6 +130,7 @@ class BoostConditionParser:
                 self._parse_festival_active,
                 self._parse_race_outcome,
                 self._parse_compare_variable,
+                self._parse_romanization,
                 self._parse_always_true,  # Check last as it's often present with others
             ]
 
@@ -168,6 +169,7 @@ class BoostConditionParser:
                         "ConditionFestivalActive",
                         "ConditionRaceOutcome",
                         "ConditionCompareVariable",
+                        "ConditionRomanization",
                     ]
                 )
                 if not has_other:
@@ -502,6 +504,28 @@ class BoostConditionParser:
                 if len(parts) > 0:
                     return "; ".join(parts)
                 return "Race outcome required"
+        except Exception:
+            pass
+        return None
+
+    def _parse_romanization(self, condition: TemplateAttribute) -> str | None:
+        """Parse ConditionRomanization (Romanization percentage threshold)."""
+        try:
+            romanization = condition.find("ConditionRomanization")
+            if isinstance(romanization, (TemplateAttribute, DictAttribute, Property)):
+                target_value = self.find_val(romanization, "TargetValue", (int, float))
+                comparison_op = self.find_val(romanization, "ComparisonOperator", (int, str))
+                is_global = self.find_val(romanization, "CheckGlobalValue", bool)
+
+                if target_value is None:
+                    return None
+
+                op_symbol = COMPARISON_OPERATORS.get(comparison_op or "AtLeast", ">=")
+                amount_str = str(int(target_value)) if target_value == int(target_value) else str(target_value)
+                result = f"Romanization {op_symbol} {amount_str}%"
+                if is_global:
+                    result += " (Global)"
+                return result
         except Exception:
             pass
         return None

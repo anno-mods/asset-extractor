@@ -79,6 +79,23 @@ Note: `reworked_item_extractor.py` is a separate WIP file with broken imports (s
 - Version report is auto-generated when 2+ versions exist in the DB.
 - `--prev-version` overrides the default (latest − 1) comparison base.
 
+## Regenerating the Calculator's `params.js`
+
+`assetextractor/conversion/calculator/conversion_calculator.ipynb` regenerates `../anno-117-calculator/js/params.js` and `params.schema.json` from the currently-configured `config.json` cache. Running it via `.venv/Scripts/python.exe -m jupyter run conversion_calculator.ipynb` can **silently fail**: if `nbformat`/`nbclient` aren't installed in this project's `.venv`, `jupyter` still resolves a `jupyter-run` entry point elsewhere on PATH (a different, unrelated Python environment) and "succeeds" (exit 0, notebook output looks normal) — but `params.js`'s mtime never changes, because that other environment isn't running against this repo's code/data. Symptom: no error, no diff, nothing happens.
+
+Fix/verify:
+```bash
+uv pip install nbformat nbclient ipykernel   # one-time, into this repo's .venv
+```
+Then execute the notebook via `nbclient` directly (not `jupyter run`) from the **repo root** (`config.json` and the `../anno-117-calculator/js/params.js` output path are both relative to CWD):
+```python
+import nbformat
+from nbclient import NotebookClient
+nb = nbformat.read("assetextractor/conversion/calculator/conversion_calculator.ipynb", as_version=4)
+NotebookClient(nb, timeout=600, kernel_name="python3").execute()
+```
+Always confirm success by checking `params.js`'s mtime (or a `git diff`/`stat`) after running — not just the process exit code.
+
 ## Typed Asset Subclasses
 
 Game-domain `Asset` subclasses live in `assetextractor/parsing/typed/`. Each subclass declares its XML template name(s) once (via `template_names=`) and is auto-registered; no other file needs updating. See `assetextractor/parsing/typed/README.md` for the full guide — including multi-template mapping, abstract base conventions, and `BaseAssetGUID` upgrade caveats.

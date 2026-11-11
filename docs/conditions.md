@@ -232,6 +232,19 @@ When a Matcher reference exists at `ObjectFilter.Matcher`, parse the `MatcherCri
 
 **Fallback**: `"{VariableToCheck} comparison required"` (if `SecondVariable` has no recognized literal set)
 
+### 17. ConditionRomanization
+
+**Description**: Requires the Romanization percentage (session or global) to satisfy a threshold.
+
+**Format**: `"Romanization {operator} {amount}% [(Global)]"`
+
+**Fields**:
+- `TargetValue`: Threshold percentage (already a whole-number percent, e.g. `50` means 50%)
+- `ComparisonOperator`: Comparison operator (defaults to `AtLeast` when unset)
+- `CheckGlobalValue` / `CheckSessionValue`: Scope of the check; `CheckGlobalValue` adds a `(Global)` suffix, otherwise the check is session-scoped (no suffix)
+
+**Example**: `"Romanization > 50%"` (GUID 155327, `TargetValue=50`, `ComparisonOperator="MoreThan"`, `CheckSessionValue=True`)
+
 ## Comparison Operators
 
 Used across multiple condition types:
@@ -242,8 +255,10 @@ Used across multiple condition types:
 | AtLeast | AtLeast | >= |
 | AtMost | AtMost | <= |
 | LessThan | LessThan | < |
-| GreaterThan | GreaterThan | > |
-| Equal | Equal | = |
+| MoreThan | MoreThan | > |
+| Equals | Equals | = |
+
+**Note**: These are the literal names in the game's `ComparisonOperator` dataset (`datasets.xml`, dataset ID 259) — `MoreThan` and `Equals`, not `GreaterThan`/`Equal`. `COMPARISON_OPERATORS` in `constants.py` was fixed to match on 2026-08-21; it previously had wrong keys that silently fell back to `>=` for any `MoreThan`/`Equals` comparison.
 
 ## Formatting Helper
 
@@ -308,6 +323,7 @@ Conditions are checked in order:
 14. ConditionFestivalActive
 15. ConditionRaceOutcome
 16. ConditionCompareVariable
+17. ConditionRomanization
 
 **Return Early**: Once a condition is successfully parsed, return immediately (don't check remaining types).
 

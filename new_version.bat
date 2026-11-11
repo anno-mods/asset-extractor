@@ -80,8 +80,7 @@ echo ============================================================
 echo.
 
 :: Get current date in YYYY-MM-DD format
-for /f "tokens=2 delims==" %%I in ('wmic os get localdatetime /value') do set datetime=%%I
-set DATE_STAMP=%datetime:~0,4%-%datetime:~4,2%-%datetime:~6,2%
+for /f %%I in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd"') do set DATE_STAMP=%%I
 
 set ARCHIVE_NAME=assetbrowser-%DATE_STAMP%.7z
 

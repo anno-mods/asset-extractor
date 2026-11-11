@@ -79,7 +79,7 @@ class TestBoostConditionExtraction:
             (41355, "Fire Safety >= 1000"),
             (41353, "Knowledge >= 10000"),
             (41354, "Belief >= 10000"),
-            (41360, "Money >= 10000"),
+            (41360, "Income >= 10000"),
         ]
 
         for guid, expected_condition in test_cases:
@@ -257,7 +257,7 @@ class TestItemCSVEndToEnd:
             "41355": "Fire Safety >= 1000",
             "41353": "Knowledge >= 10000",
             "41354": "Belief >= 10000",
-            "41360": "Money >= 10000",
+            "41360": "Income >= 10000",
         }
 
         # Create GUID to row mapping

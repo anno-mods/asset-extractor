@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import typing as t
 
 import lxml.etree as et
@@ -20,6 +21,18 @@ def parse_text_id(text: str) -> int:
         return int(text)
     except ValueError:
         return int(text, 16)
+
+
+_TAG_RE = re.compile(r"</?[A-Za-z][^<>]*>")
+
+
+def strip_html_tags(text: str) -> str:
+    """Remove rich-text markup tags from localized text, e.g. '<color=#fff>Rome</color>' -> 'Rome'.
+
+    Only matches spans starting with '<letter' or '</letter', so bare '<'/'>' characters
+    used as comparison operators (e.g. 'tier < 3 and progress > 50%') are left untouched.
+    """
+    return _TAG_RE.sub("", text)
 
 
 class Text(NamedElement["TextCache"]):

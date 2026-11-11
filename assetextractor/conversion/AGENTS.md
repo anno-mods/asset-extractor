@@ -67,7 +67,7 @@ New dev-only deps used by these scripts: `matplotlib`, `networkx` (production-ch
 
 ### Item CSV Pipeline (separate from the table above)
 
-The **working**, currently-used item extractor is `item_extractor.py` (`ItemExtractor`), not `reworked_item_extractor.py`. It is driven by `extract_items_to_csv.py --version X` (invoked from `new_version.bat`, see `docs/development.md`), and delegates boost-condition text to `boost_conditions.py::BoostConditionParser`. Item sources come from `item_sources.py::ItemSourceTracker`. Boost condition types handled (13 original + `ConditionFestivalActive`/`ConditionRaceOutcome`/`ConditionCompareVariable` added 2026-08-20) are documented in `docs/conditions.md`; any condition type not in that list falls back to the literal string `"Boost condition active"` in the CSV — grep for that string to find gaps.
+The **working**, currently-used item extractor is `item_extractor.py` (`ItemExtractor`), not `reworked_item_extractor.py`. It is driven by `extract_items_to_csv.py --version X` (invoked from `new_version.bat`, see `docs/development.md`), and delegates boost-condition text to `boost_conditions.py::BoostConditionParser`. Item sources come from `item_sources.py::ItemSourceTracker`. Boost condition types handled (13 original + `ConditionFestivalActive`/`ConditionRaceOutcome`/`ConditionCompareVariable` added 2026-08-20 + `ConditionRomanization` added 2026-08-21) are documented in `docs/conditions.md`; any condition type not in that list falls back to the literal string `"Boost condition active"` in the CSV — grep for that string to find gaps.
 
 ---
 
@@ -256,6 +256,14 @@ Some DLC-specific effects and items are geographically restricted to their assoc
 - Only targets that are associated with at least one of the allowed regions are retained.
 
 **Pitfall**: `Building.AssociatedRegions()` returns a **list of literal strings** (e.g., `["Roman", "Moderate"]`). Do not attempt to compare them against GUIDs. Ensure the `dlc_region_filter` also uses the correct literal string values.
+
+### Excluding above-threshold DLC content entirely (`dlc_region_filter.py`)
+
+Distinct from the target-narrowing above: `assetextractor/conversion/calculator/dlc_region_filter.py` (unit-tested in `tests/integration/test_dlc_region_filter.py`) drops whole entries from every output array when they're gated behind a DLC above `include_dlcs_up_to`. Two signals are checked, since `dlcUnlocks` detection doesn't reliably cover a brand-new region the first time it ships (nothing yet references it via an `UplayProductUnlocks`-style link the way DLC01/02 extending the existing Roman region do):
+1. `dlcUnlocks` tagging (`allowed_dlc_guids`).
+2. Raw `associatedRegions`/`region` literals against a DLC→region map (`excluded_regions_for`), for content the `dlcUnlocks` detection missed.
+
+**Pitfall (regression, now covered by the test suite):** for the region check, exclude an entry only if **all** of its regions are excluded, not if **any** are. Products/modules available in every region (e.g. Silo, Silica) list the new region alongside Roman/Celtic — using "any excluded region → drop" wrongly removed universally-available content the first time this was written.
 
 ## DLC Unlock Consistency Test (`calculator/test_unlocks.py`)
 

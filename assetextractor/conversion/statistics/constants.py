@@ -21,4 +21,4 @@ SOURCE_TEXT_IDS = {
 }
 
 # Comparison operators for boost conditions
-COMPARISON_OPERATORS = {0: ">=", "AtLeast": ">=", "AtMost": "<=", "LessThan": "<", "GreaterThan": ">", "Equal": "="}
+COMPARISON_OPERATORS = {0: ">=", "AtLeast": ">=", "AtMost": "<=", "LessThan": "<", "MoreThan": ">", "Equals": "="}
